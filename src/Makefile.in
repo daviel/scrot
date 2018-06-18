@@ -79,7 +79,7 @@ INCLUDES = -g -O3 -Wall -I/usr/X11R6/include $(X_CFLAGS) -I$(prefix)/include -I$
 LIBOBJS = @LIBOBJS@
 
 bin_PROGRAMS = scrot
-scrot_SOURCES = main.c getopt.c getopt1.c getopt.h scrot.h options.c options.h debug.h imlib.c structs.h
+scrot_SOURCES = main.c scrot.h imlib.c
 
 scrot_LDADD = -lX11 @GIBLIB_LIBS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs

@@ -50,52 +50,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <sys/wait.h>
 #include <giblib/giblib.h>
 
-
-#include "config.h"
-#include "structs.h"
-#include "getopt.h"
-#include "debug.h"
-
 #ifndef __GNUC__
 # define __attribute__(x)
 #endif
 
 typedef void (*sighandler_t) (int);
-
-void show_usage(void);
-void show_version(void);
-void show_mini_usage(void);
-void init_x_and_imlib(char *dispstr, int screen_num);
-char *chop_file_from_full_path(char *str);
-Imlib_Image scrot_grab_shot(void);
-void scrot_exec_app(Imlib_Image image, struct tm *tm,
-                    char *filename_im, char *filename_thumb);
-void scrot_do_delay(void);
-Imlib_Image scrot_sel_and_grab_image(void);
-Imlib_Image scrot_grab_focused(void);
-Imlib_Image scrot_grab_window(void);
-void scrot_sel_area(int *x, int *y, int *w, int *h);
-void scrot_nice_clip(int *rx, int *ry, int *rw, int *rh);
-int scrot_get_geometry(Window target, Window *client_window,
-                       int *rx, int *ry, int *rw, int *rh);
-Window scrot_get_window(Display *display,Window window,int x,int y);
-Window scrot_get_client_window(Display * display, Window target);
-Window scrot_find_window_by_property(Display * display, const Window window,
-                                     const Atom property);
-Imlib_Image scrot_grab_transparent_shot(Display *display, Window shot_target,
-                                        int x, int y, int width, int height);
-Window scrot_create_window(Display *display, int x, int y,
-                           int width, int height);
-Window scrot_get_net_frame_window(Display *display, Window target);
-char *im_printf(char *str, struct tm *tm,
-                char *filename_im, char *filename_thumb,
-                Imlib_Image im);
-Imlib_Image scrot_grab_shot_multi(void);
-Imlib_Image stalk_image_concat(gib_list *images);
-Imlib_Image create_transparent_image(Imlib_Image w_image,
-                                     Imlib_Image b_image);
-void window_set_skip_taskbar(Display *display, Window window);
-void window_set_above(Display *display, Window window, int enable);
+Imlib_Image scrot_grab_part_shot(int x, int y, int width, int height);
 
 /* Imlib stuff */
 extern Display *disp;
