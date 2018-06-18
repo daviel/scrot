@@ -71,7 +71,7 @@ PACKAGE = @PACKAGE@
 UP = @UP@
 VERSION = @VERSION@
 
-MAINTAINERCLEANFILES = Makefile.in				
+MAINTAINERCLEANFILES = Makefile.in
 
 LDFLAGS = -L/usr/X11R6/lib
 INCLUDES = -g -O3 -Wall -I/usr/X11R6/include $(X_CFLAGS) -I$(prefix)/include -I$(includedir) -I. -DPREFIX=\""$(prefix)"\" @GIBLIB_CFLAGS@
@@ -84,16 +84,16 @@ scrot_SOURCES = main.c scrot.h imlib.c
 scrot_LDADD = -lX11 @GIBLIB_LIBS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
-CONFIG_CLEAN_FILES = 
+CONFIG_CLEAN_FILES =
 PROGRAMS =  $(bin_PROGRAMS)
 
 
 DEFS = @DEFS@ -I. -I$(srcdir) -I.
 CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
-scrot_OBJECTS =  main.o getopt.o getopt1.o options.o imlib.o
-scrot_DEPENDENCIES = 
-scrot_LDFLAGS = 
+scrot_OBJECTS =  main.o imlib.o
+scrot_DEPENDENCIES =
+scrot_LDFLAGS =
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -111,7 +111,7 @@ OBJECTS = $(scrot_OBJECTS)
 all: all-redirect
 .SUFFIXES:
 .SUFFIXES: .S .c .o .s
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.ac $(ACLOCAL_M4) 
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 	cd $(top_srcdir) && $(AUTOMAKE) --foreign --include-deps src/Makefile
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
@@ -134,7 +134,7 @@ $(srcdir)/config.h.in: @MAINTAINER_MODE_TRUE@$(srcdir)/stamp-h.in
 		rm -f $(srcdir)/stamp-h.in; \
 		$(MAKE) $(srcdir)/stamp-h.in; \
 	else :; fi
-$(srcdir)/stamp-h.in: $(top_srcdir)/configure.ac $(ACLOCAL_M4) 
+$(srcdir)/stamp-h.in: $(top_srcdir)/configure.ac $(ACLOCAL_M4)
 	cd $(top_srcdir) && $(AUTOHEADER)
 	@echo timestamp > $(srcdir)/stamp-h.in 2> /dev/null
 
@@ -239,12 +239,8 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-getopt.o: getopt.c config.h
-getopt1.o: getopt1.c config.h getopt.h
-imlib.o: imlib.c scrot.h getopt.h config.h structs.h debug.h options.h
-main.o: main.c scrot.h getopt.h config.h structs.h debug.h options.h
-options.o: options.c scrot.h getopt.h config.h structs.h debug.h \
-	options.h
+imlib.o: imlib.c scrot.h
+main.o: main.c scrot.h
 
 info-am:
 info: info-am

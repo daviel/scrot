@@ -24,71 +24,58 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
+#include <time.h>
+#include <unistd.h>
 #include "scrot.h"
+
+void calculate_colors(void);
+
+#define BLOCKSIZE_X 16
+#define BLOCKSIZE_Y 16
+#define RESOLUTION_X 1920
+#define RESOLUTION_Y 1080
+#define TARGET_FPS 60
+
+Imlib_Image image;
+Imlib_Image thumbnail;
+
+Imlib_Color colors_top[RESOLUTION_X/BLOCKSIZE_X];
+Imlib_Color colors_left[RESOLUTION_Y/BLOCKSIZE_X];
+Imlib_Color colors_right[RESOLUTION_Y/BLOCKSIZE_X];
+Imlib_Color colors_bottom[RESOLUTION_X/BLOCKSIZE_X];
 
 
 int
 main(int argc,
      char **argv)
 {
-  int BLOCKSIZE_X = 16;
-  int BLOCKSIZE_Y = 16;
-  int RESOLUTION_X = 1280;
-  int RESOLUTION_Y = 800;
-
-  Imlib_Image image;
-  Imlib_Image thumbnail;
-  //Imlib_Load_Error err;
-
   init_x_and_imlib(NULL, 0);
+  imlib_set_cache_size(0);
 
-  image = scrot_grab_part_shot(0, 0, RESOLUTION_X, BLOCKSIZE_Y);
-  Imlib_Color colors_top[RESOLUTION_X/BLOCKSIZE_X];
-  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-    thumbnail =
-      gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y,
-                                            1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_top[x]);
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
+  struct timespec ts;
+  float frame_time = 1/(float) TARGET_FPS;
+  ts.tv_sec  = 0;
+  ts.tv_nsec = 500000000L;
+  double render_time = 0;
+
+  while(1){
+    clock_t start = clock();
+    calculate_colors();
+    clock_t end = clock();
+    render_time = (double)(end-start) / CLOCKS_PER_SEC;
+
+    //printf("Elapsed time: %.6f seconds\n", render_time);
+
+    if(render_time >= frame_time){
+
+    }else{
+      ts.tv_nsec = (frame_time - render_time) * 1000000000;
+      nanosleep(&ts, NULL);
+    }
   }
-
-  image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
-  Imlib_Color colors_left[RESOLUTION_Y/BLOCKSIZE_X];
-  for(int x = 1, l = RESOLUTION_Y/BLOCKSIZE_X-1; x < l; x++){
-    thumbnail =
-      gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X,
-                                            1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_left[x]);
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
-  }
-
-  image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
-  Imlib_Color colors_right[RESOLUTION_Y/BLOCKSIZE_X];
-  for(int x = 1, l = RESOLUTION_Y/BLOCKSIZE_X-1; x < l; x++){
-    thumbnail =
-      gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X,
-                                            1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_right[x]);
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
-  }
-
-  image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
-  Imlib_Color colors_bottom[RESOLUTION_X/BLOCKSIZE_X];
-  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-    thumbnail =
-     gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y,
-                                            1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
-  }
-
-  gib_imlib_free_image_and_decache(image);
   return 0;
 }
+
 
 Imlib_Image
 scrot_grab_part_shot(int x, int y, int width, int height)
@@ -96,8 +83,50 @@ scrot_grab_part_shot(int x, int y, int width, int height)
   Imlib_Image im;
 
   XBell(disp, 0);
-  im =
-    gib_imlib_create_image_from_drawable(root, 0, x, y, width,
-                                         height, 1);
+  im = gib_imlib_create_image_from_drawable(root, 0, x, y, width, height, 1);
   return im;
+}
+
+
+void
+calculate_colors(void){
+  image = scrot_grab_part_shot(0, 0, RESOLUTION_X, BLOCKSIZE_Y);
+  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_top[x]);
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+
+  image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
+  for(int x = 1, l = RESOLUTION_Y/BLOCKSIZE_X-1; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_left[x]);
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+
+  image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
+  for(int x = 1, l = RESOLUTION_Y/BLOCKSIZE_X-1; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_right[x]);
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+
+  image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
+  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
+    thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
 }
