@@ -115,13 +115,13 @@ main(int argc,
      char **argv)
 {
   printf("Started!\n");
-  //ws2811_return_t ret;
+  ws2811_return_t ret;
 
-  //if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
-  //{
-  //  fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
-  //  return ret;
-  //}
+  if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
+  {
+    fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
+    return ret;
+  }
 
   init_x_and_imlib(NULL, 0);
   imlib_set_cache_size(0);
@@ -138,11 +138,11 @@ main(int argc,
     clock_t end = clock();
     render_time = (double)(end-start) / CLOCKS_PER_SEC;
 
-    //if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
-    //{
-    //  fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
-    //  break;
-    //}
+    if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
+    {
+      fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
+      break;
+    }
 
     //printf("Elapsed time: %.6f seconds\n", render_time);
 
@@ -224,7 +224,7 @@ void calculate_bottom(){
 }
 
 void calculate_right(){
-  int right_offset = 74+LEDS_RIGHTLEFT;
+  int right_offset = 79+LEDS_RIGHTLEFT;
   image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
 
   for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
