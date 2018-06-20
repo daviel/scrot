@@ -212,7 +212,7 @@ void calculate_left(){
 }
 
 void calculate_bottom(){
-  int bottom_offset = 46;
+  int bottom_offset = 244;
   image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
 
   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
@@ -220,8 +220,8 @@ void calculate_bottom(){
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
 
-    if(bottom_offset >= 78 && bottom_offset <= 244){
-      bottom_offset = 244;
+    if(bottom_offset >= 287){
+      bottom_offset = 46;
     }
     bottom_offset++;
     ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
