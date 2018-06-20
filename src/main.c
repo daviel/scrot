@@ -24,17 +24,74 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
+
 #include <time.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <getopt.h>
+
+
+#include "clk.h"
+#include "gpio.h"
+#include "dma.h"
+#include "pwm.h"
+#include "ws2811.h"
+
 #include "scrot.h"
 
 void calculate_colors(void);
 
-#define BLOCKSIZE_X 16
-#define BLOCKSIZE_Y 16
+#define BLOCKSIZE_X 26
+#define BLOCKSIZE_Y 24
 #define RESOLUTION_X 1920
 #define RESOLUTION_Y 1080
-#define TARGET_FPS 60
+#define TARGET_FPS 30 
+
+
+// defaults for cmdline options
+#define TARGET_FREQ             WS2811_TARGET_FREQ
+#define GPIO_PIN                18
+#define DMA                     10
+//#define STRIP_TYPE            WS2811_STRIP_RGB                // WS2812/SK6812RGB integrated chip+leds
+#define STRIP_TYPE              WS2811_STRIP_GBR                // WS2812/SK6812RGB integrated chip+leds
+//#define STRIP_TYPE            SK6812_STRIP_RGBW               // SK6812RGBW (NOT SK6812RGB)
+#define LED_COUNT               300
+
+
+ws2811_t ledstring =
+{
+    .freq = TARGET_FREQ,
+    .dmanum = DMA,
+    .channel =
+    {
+        [0] =
+        {
+            .gpionum = GPIO_PIN,
+            .count = LED_COUNT,
+            .invert = 0,
+            .brightness = 255,
+            .strip_type = STRIP_TYPE,
+        },
+        [1] =
+        {
+            .gpionum = 0,
+            .count = 0,
+            .invert = 0,
+            .brightness = 0,
+        },
+    },
+};
+
+
 
 Imlib_Image image;
 Imlib_Image thumbnail;
@@ -49,6 +106,15 @@ int
 main(int argc,
      char **argv)
 {
+  printf("Started!\n");
+  ws2811_return_t ret;
+
+  if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
+  {
+    fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
+    return ret;
+  }
+  
   init_x_and_imlib(NULL, 0);
   imlib_set_cache_size(0);
 
@@ -58,7 +124,14 @@ main(int argc,
   ts.tv_nsec = 500000000L;
   double render_time = 0;
 
+  int pos = 0;
   while(1){
+    if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
+    {
+      fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
+      break;
+    }
+
     clock_t start = clock();
     calculate_colors();
     clock_t end = clock();
@@ -88,45 +161,63 @@ scrot_grab_part_shot(int x, int y, int width, int height)
 }
 
 
+#define LEDS_RIGHTLEFT 45
+#define LEDS_TOPBOTTOM 72
+
 void
 calculate_colors(void){
   image = scrot_grab_part_shot(0, 0, RESOLUTION_X, BLOCKSIZE_Y);
+  int top_offset = 125+72;
   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
     thumbnail = gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_top[x]);
+  
+    ledstring.channel[0].leds[top_offset] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
+    top_offset--;
+    
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
 
+  int left_offset = 199;
   image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
-  for(int x = 1, l = RESOLUTION_Y/BLOCKSIZE_X-1; x < l; x++){
+  for(int x = 0, l = RESOLUTION_Y/BLOCKSIZE_X; x < l; x++){
     thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_left[x]);
+      
+    ledstring.channel[0].leds[left_offset] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
+    left_offset++;
+
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
 
+  int right_offset = 74+LEDS_RIGHTLEFT;
   image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
-  for(int x = 1, l = RESOLUTION_Y/BLOCKSIZE_X-1; x < l; x++){
+  for(int x = 0, l = RESOLUTION_Y/BLOCKSIZE_X; x < l; x++){
     thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_right[x]);
+    
+    ledstring.channel[0].leds[right_offset] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
+    right_offset--;
+    
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
 
-  image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
-  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-    thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+  //image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
+  //for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
+  //  thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+  //  imlib_context_set_image(thumbnail);
+  //  imlib_image_query_pixel(0, 0, &colors_bottom[x]);
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
-    gib_imlib_free_image(thumbnail);
-  }
-  gib_imlib_free_image(image);
+  //  gib_imlib_free_image(thumbnail);
+  //}
+  //gib_imlib_free_image(image);
 }

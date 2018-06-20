@@ -91,7 +91,7 @@ PROGRAMS =  $(bin_PROGRAMS)
 DEFS = @DEFS@ -I. -I$(srcdir) -I.
 CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
-scrot_OBJECTS =  main.o imlib.o
+scrot_OBJECTS =  main.o imlib.o ws2811.o mailbox.o dma.o pcm.o pwm.o rpihw.o
 scrot_DEPENDENCIES =
 scrot_LDFLAGS =
 CFLAGS = @CFLAGS@
@@ -240,7 +240,12 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 imlib.o: imlib.c scrot.h
-main.o: main.c scrot.h
+main.o: main.c scrot.h clk.h dma.h gpio.h pwm.h ws2811.h
+
+dma.o: dma.c dma.h
+pwm.o: pwm.c pwm.h ws2811.h
+ws2811.o: ws2811.c clk.h dma.h gpio.h mailbox.h pcm.h pwm.h rpihw.h ws2811.h
+
 
 info-am:
 info: info-am
