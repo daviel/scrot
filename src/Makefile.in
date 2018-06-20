@@ -239,8 +239,8 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-imlib.o: imlib.c scrot.h
-main.o: main.c scrot.h clk.h dma.h gpio.h pwm.h ws2811.h
+imlib.o: imlib.c scrot.h imlib.h
+main.o: main.c scrot.h clk.h dma.h gpio.h pwm.h ws2811.h imlib.h
 
 dma.o: dma.c dma.h
 pwm.o: pwm.c pwm.h ws2811.h

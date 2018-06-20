@@ -45,16 +45,24 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "dma.h"
 #include "pwm.h"
 #include "ws2811.h"
+#include "imlib.h"
 
 #include "scrot.h"
 
 void calculate_colors(void);
+void calculate_top(void);
+void calculate_left(void);
+void calculate_right(void);
+void calculate_bottom(void);
 
 #define BLOCKSIZE_X 26
 #define BLOCKSIZE_Y 24
 #define RESOLUTION_X 1920
 #define RESOLUTION_Y 1080
-#define TARGET_FPS 30 
+#define TARGET_FPS 30
+
+#define LEDS_RIGHTLEFT 45
+#define LEDS_TOPBOTTOM 72
 
 
 // defaults for cmdline options
@@ -97,8 +105,8 @@ Imlib_Image image;
 Imlib_Image thumbnail;
 
 Imlib_Color colors_top[RESOLUTION_X/BLOCKSIZE_X];
-Imlib_Color colors_left[RESOLUTION_Y/BLOCKSIZE_X];
-Imlib_Color colors_right[RESOLUTION_Y/BLOCKSIZE_X];
+Imlib_Color colors_left[RESOLUTION_Y/BLOCKSIZE_Y];
+Imlib_Color colors_right[RESOLUTION_Y/BLOCKSIZE_Y];
 Imlib_Color colors_bottom[RESOLUTION_X/BLOCKSIZE_X];
 
 
@@ -107,14 +115,14 @@ main(int argc,
      char **argv)
 {
   printf("Started!\n");
-  ws2811_return_t ret;
+  //ws2811_return_t ret;
 
-  if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
-  {
-    fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
-    return ret;
-  }
-  
+  //if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
+  //{
+  //  fprintf(stderr, "ws2811_init failed: %s\n", ws2811_get_return_t_str(ret));
+  //  return ret;
+  //}
+
   init_x_and_imlib(NULL, 0);
   imlib_set_cache_size(0);
 
@@ -124,18 +132,17 @@ main(int argc,
   ts.tv_nsec = 500000000L;
   double render_time = 0;
 
-  int pos = 0;
   while(1){
-    if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
-    {
-      fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
-      break;
-    }
-
     clock_t start = clock();
     calculate_colors();
     clock_t end = clock();
     render_time = (double)(end-start) / CLOCKS_PER_SEC;
+
+    //if ((ret = ws2811_render(&ledstring)) != WS2811_SUCCESS)
+    //{
+    //  fprintf(stderr, "ws2811_render failed: %s\n", ws2811_get_return_t_str(ret));
+    //  break;
+    //}
 
     //printf("Elapsed time: %.6f seconds\n", render_time);
 
@@ -160,34 +167,41 @@ scrot_grab_part_shot(int x, int y, int width, int height)
   return im;
 }
 
-
-#define LEDS_RIGHTLEFT 45
-#define LEDS_TOPBOTTOM 72
-
 void
 calculate_colors(void){
+  calculate_top();
+  calculate_left();
+  calculate_right();
+  //calculate_bottom();
+}
+
+void calculate_top(){
   image = scrot_grab_part_shot(0, 0, RESOLUTION_X, BLOCKSIZE_Y);
   int top_offset = 125+72;
   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
     thumbnail = gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_top[x]);
-  
+
     ledstring.channel[0].leds[top_offset] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
     top_offset--;
-    
+
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
+}
 
+void calculate_left(){
   int left_offset = 199;
   image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
-  for(int x = 0, l = RESOLUTION_Y/BLOCKSIZE_X; x < l; x++){
-    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
+
+  for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_left[x]);
-      
+
     ledstring.channel[0].leds[left_offset] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
     left_offset++;
 
@@ -195,29 +209,34 @@ calculate_colors(void){
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
+}
 
+void calculate_bottom(){
+  image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
+  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
+    thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+}
+
+void calculate_right(){
   int right_offset = 74+LEDS_RIGHTLEFT;
   image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
-  for(int x = 0, l = RESOLUTION_Y/BLOCKSIZE_X; x < l; x++){
-    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_X, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
+
+  for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_right[x]);
-    
+
     ledstring.channel[0].leds[right_offset] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
     right_offset--;
-    
+
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
-
-  //image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
-  //for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-  //  thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-  //  imlib_context_set_image(thumbnail);
-  //  imlib_image_query_pixel(0, 0, &colors_bottom[x]);
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
-  //  gib_imlib_free_image(thumbnail);
-  //}
-  //gib_imlib_free_image(image);
 }
