@@ -220,8 +220,8 @@ void calculate_bottom(){
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
 
-    if(bottom_offset >= 79 && bottom_offset <= 246){
-      bottom_offset = 246;
+    if(bottom_offset >= 78 && bottom_offset <= 244){
+      bottom_offset = 244;
     }
     bottom_offset++;
     ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
