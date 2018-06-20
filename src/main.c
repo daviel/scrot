@@ -172,7 +172,7 @@ calculate_colors(void){
   calculate_top();
   calculate_left();
   calculate_right();
-  //calculate_bottom();
+  calculate_bottom();
 }
 
 void calculate_top(){
@@ -212,11 +212,22 @@ void calculate_left(){
 }
 
 void calculate_bottom(){
+  int bottom_offset = 79;
   image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
+
   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
     thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+
+    if(bottom_offset < 79){
+      ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
+    } else{
+      bottom_offset = 246;
+      ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
+    }
+
+    bottom_offset++;
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
     gib_imlib_free_image(thumbnail);
   }
