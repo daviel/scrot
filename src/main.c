@@ -55,14 +55,14 @@ void calculate_left(void);
 void calculate_right(void);
 void calculate_bottom(void);
 
-#define BLOCKSIZE_X 26
-#define BLOCKSIZE_Y 24
+#define BLOCKSIZE_X 38
+#define BLOCKSIZE_Y 36
 #define RESOLUTION_X 1920
 #define RESOLUTION_Y 1080
 #define TARGET_FPS 30
 
-#define LEDS_RIGHTLEFT 45
-#define LEDS_TOPBOTTOM 72
+#define LEDS_RIGHTLEFT 30
+#define LEDS_TOPBOTTOM 50
 
 
 // defaults for cmdline options
@@ -131,7 +131,10 @@ main(int argc,
   ts.tv_sec  = 0;
   ts.tv_nsec = 500000000L;
   double render_time = 0;
-
+  
+  for(int led_num = 0; led_num < 300; led_num++)
+    ledstring.channel[0].leds[led_num] = 0; 
+  
   while(1){
     clock_t start = clock();
     calculate_colors();
@@ -167,6 +170,7 @@ scrot_grab_part_shot(int x, int y, int width, int height)
   return im;
 }
 
+
 void
 calculate_colors(void){
   calculate_top();
@@ -177,7 +181,7 @@ calculate_colors(void){
 
 void calculate_top(){
   image = scrot_grab_part_shot(0, 0, RESOLUTION_X, BLOCKSIZE_Y);
-  int top_offset = 125+72;
+  int top_offset = 176;
   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
     thumbnail = gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
     imlib_context_set_image(thumbnail);
@@ -193,7 +197,7 @@ void calculate_top(){
 }
 
 void calculate_left(){
-  int left_offset = 199;
+  int left_offset = 177;
   image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
 
   for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
@@ -212,7 +216,7 @@ void calculate_left(){
 }
 
 void calculate_bottom(){
-  int bottom_offset = 244;
+  int bottom_offset = 203;
   image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
 
   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
@@ -220,8 +224,8 @@ void calculate_bottom(){
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
 
-    if(bottom_offset >= 287){
-      bottom_offset = 46;
+    if(bottom_offset >= 225){
+      bottom_offset = 65;
     }
     bottom_offset++;
     ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
@@ -233,7 +237,7 @@ void calculate_bottom(){
 }
 
 void calculate_right(){
-  int right_offset = 79+LEDS_RIGHTLEFT;
+  int right_offset = 123;
   image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
 
   for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
@@ -241,7 +245,8 @@ void calculate_right(){
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_right[x]);
 
-    ledstring.channel[0].leds[right_offset] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
+    if(right_offset != 80)
+      ledstring.channel[0].leds[right_offset] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
     right_offset--;
 
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
