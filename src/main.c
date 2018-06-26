@@ -219,22 +219,22 @@ calculate_colors(void){
 
 void
 init(void){
-  int RIGHT_LENGTH = RIGHT_STOP_LED - RIGHT_START_LED;
-  int TOP_LENGTH = TOP_STOP_LED - TOP_START_LED;
-  int LEFT_LENGTH = LEFT_STOP_LED - LEFT_START_LED;
-  int BOTTOM_LENGTH = BOTTOM_STOP_LED - BOTTOM_START_LED;
+  RIGHT_LENGTH = RIGHT_STOP_LED - RIGHT_START_LED;
+  TOP_LENGTH = TOP_STOP_LED - TOP_START_LED;
+  LEFT_LENGTH = LEFT_STOP_LED - LEFT_START_LED;
+  BOTTOM_LENGTH = BOTTOM_STOP_LED - BOTTOM_START_LED;
 
-  int TOP_BLOCKSIZE_X = RESOLUTION_X / TOP_LENGTH;
-  int TOP_BLOCKSIZE_Y = RESOLUTION_Y / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+  TOP_BLOCKSIZE_X = RESOLUTION_X / TOP_LENGTH;
+  TOP_BLOCKSIZE_Y = RESOLUTION_Y / BLOCKSIZE_DIVISION_OF_RESOLUTION;
 
-  int BOTTOM_BLOCKSIZE_X = RESOLUTION_X / BOTTOM_LENGTH;
-  int BOTTOM_BLOCKSIZE_Y = RESOLUTION_Y / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+  BOTTOM_BLOCKSIZE_X = RESOLUTION_X / BOTTOM_LENGTH;
+  BOTTOM_BLOCKSIZE_Y = RESOLUTION_Y / BLOCKSIZE_DIVISION_OF_RESOLUTION;
 
-  int LEFT_BLOCKSIZE_X = RESOLUTION_X / BLOCKSIZE_DIVISION_OF_RESOLUTION;
-  int LEFT_BLOCKSIZE_Y = RESOLUTION_Y / LEFT_LENGTH;
+  LEFT_BLOCKSIZE_X = RESOLUTION_X / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+  LEFT_BLOCKSIZE_Y = RESOLUTION_Y / LEFT_LENGTH;
 
-  int RIGHT_BLOCKSIZE_X = RESOLUTION_X / BLOCKSIZE_DIVISION_OF_RESOLUTION;
-  int RIGHT_BLOCKSIZE_Y = RESOLUTION_Y / RIGHT_LENGTH;
+  RIGHT_BLOCKSIZE_X = RESOLUTION_X / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+  RIGHT_BLOCKSIZE_Y = RESOLUTION_Y / RIGHT_LENGTH;
 }
 
 void calculate_top(){
@@ -242,16 +242,12 @@ void calculate_top(){
 
   for(int x = 0, l = TOP_LENGTH; x < l; x++){
     thumbnail = gib_imlib_create_cropped_scaled_image(image, x * TOP_BLOCKSIZE_X, 0, TOP_BLOCKSIZE_X, TOP_BLOCKSIZE_Y, 1, 1, 1);
-    if(thumbnail == NULL){
-      printf("NO THUMBNAIL\n");
-      continue;
-    }
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_top[x]);
 
     ledstring.channel[0].leds[x + TOP_START_LED] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
 
-    printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
