@@ -67,7 +67,7 @@ int RESOLUTION_Y = 1080;
 int TARGET_FPS = 30;
 
 int BOTTOM_START_LED = 204;
-int BOTTOM_STOP_LED = 254;
+int BOTTOM_STOP_LED = 255;
 //bool BOTTOM_INVERT = false;
 
 int LEFT_START_LED = 174;
@@ -216,8 +216,8 @@ scrot_grab_part_shot(int x, int y, int width, int height)
 void
 calculate_colors(void){
   calculate_top();
-  //calculate_left();
-  //calculate_right();
+  calculate_left();
+  calculate_right();
   calculate_bottom();
 }
 
