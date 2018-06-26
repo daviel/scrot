@@ -157,14 +157,14 @@ main(int argc,
   init();
   bcm_host_init();
 
-  DISPMANX_DISPLAY_HANDLE_T displayHandle = vc_dispmanx_display_open(displayNumber);
+  DISPMANX_DISPLAY_HANDLE_T displayHandle = vc_dispmanx_display_open(0);
 
   if (displayHandle == 0)
   {
       fprintf(stderr,
               "%s: unable to open display %d\n",
               program,
-              displayNumber);
+              0);
 
       exit(EXIT_FAILURE);
   }
