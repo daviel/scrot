@@ -74,8 +74,8 @@ int LEFT_START_LED = 175;
 int LEFT_STOP_LED = 205;
 //bool LEFT_INVERT = true;
 
-int RIGHT_START_LED = 1;
-int RIGHT_STOP_LED = 10;
+int RIGHT_START_LED = 95;
+int RIGHT_STOP_LED = 122;
 //bool RIGHT_INVERT = false;
 
 int TOP_START_LED = 123;
