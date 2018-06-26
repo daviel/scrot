@@ -74,8 +74,8 @@ int RIGHT_START_LED = 1;
 int RIGHT_STOP_LED = 10;
 //bool RIGHT_INVERT = FALSE;
 
-int TOP_START_LED = 1;
-int TOP_STOP_LED = 10;
+int TOP_START_LED = 110;
+int TOP_STOP_LED = 160;
 //bool TOP_INVERT = FALSE;
 
 
@@ -145,13 +145,13 @@ int
 main(int argc,
      char **argv)
 {
-  init();
   printf("Started!\n");
+  init();
 
-  colors_right = malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  colors_top = malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  colors_left = malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  colors_bottom = malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  //colors_right = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_top = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  //colors_left = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  //colors_bottom = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
 
   ws2811_return_t ret;
 
@@ -242,12 +242,16 @@ void calculate_top(){
 
   for(int x = 0, l = TOP_LENGTH; x < l; x++){
     thumbnail = gib_imlib_create_cropped_scaled_image(image, x * TOP_BLOCKSIZE_X, 0, TOP_BLOCKSIZE_X, TOP_BLOCKSIZE_Y, 1, 1, 1);
+    if(thumbnail == NULL){
+      printf("NO THUMBNAIL\n");
+      continue;
+    }
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_top[x]);
 
     ledstring.channel[0].leds[x + TOP_START_LED] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
 
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
+    printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
     gib_imlib_free_image(thumbnail);
   }
   gib_imlib_free_image(image);
