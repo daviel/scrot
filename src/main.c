@@ -68,19 +68,19 @@ int TARGET_FPS = 30;
 
 int BOTTOM_START_LED = 1;
 int BOTTOM_STOP_LED = 10;
-//bool BOTTOM_INVERT = FALSE;
+//bool BOTTOM_INVERT = false;
 
-int LEFT_START_LED = 1;
-int LEFT_STOP_LED = 10;
-//bool LEFT_INVERT = FALSE;
+int LEFT_START_LED = 175;
+int LEFT_STOP_LED = 205;
+//bool LEFT_INVERT = true;
 
 int RIGHT_START_LED = 1;
 int RIGHT_STOP_LED = 10;
-//bool RIGHT_INVERT = FALSE;
+//bool RIGHT_INVERT = false;
 
-int TOP_START_LED = 124;
-int TOP_STOP_LED = 175;
-bool TOP_INVERT = true;
+int TOP_START_LED = 123;
+int TOP_STOP_LED = 174;
+//bool TOP_INVERT = true;
 
 
 int RIGHT_LENGTH;
@@ -152,10 +152,10 @@ main(int argc,
   printf("Started!\n");
   init();
 
-  //colors_right = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_right = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
   colors_top = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  //colors_left = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  //colors_bottom = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_left = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_bottom = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
 
   ws2811_return_t ret;
 
@@ -216,8 +216,8 @@ scrot_grab_part_shot(int x, int y, int width, int height)
 void
 calculate_colors(void){
   calculate_top();
-  //calculate_left();
-  //calculate_right();
+  calculate_left();
+  calculate_right();
   //calculate_bottom();
 }
 
@@ -257,61 +257,55 @@ void calculate_top(){
   gib_imlib_free_image(image);
 }
 
-// void calculate_left(){
-//   int left_offset = 177;
-//   image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
-//
-//   for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
-//     thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-//
-//     imlib_context_set_image(thumbnail);
-//     imlib_image_query_pixel(0, 0, &colors_left[x]);
-//
-//     ledstring.channel[0].leds[left_offset] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
-//     left_offset++;
-//
-//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
-//     gib_imlib_free_image(thumbnail);
-//   }
-//   gib_imlib_free_image(image);
-// }
-//
-// void calculate_bottom(){
-//   int bottom_offset = 203;
-//   image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
-//
-//   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-//     thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-//     imlib_context_set_image(thumbnail);
-//     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
-//
-//     if(bottom_offset >= 225){
-//       bottom_offset = 65;
-//     }
-//     bottom_offset++;
-//     ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
-//
-//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
-//     gib_imlib_free_image(thumbnail);
-//   }
-//   gib_imlib_free_image(image);
-// }
-//
-// void calculate_right(){
-//   int right_offset = 123;
-//   image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
-//
-//   for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
-//     thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
-//     imlib_context_set_image(thumbnail);
-//     imlib_image_query_pixel(0, 0, &colors_right[x]);
-//
-//     if(right_offset != 80)
-//       ledstring.channel[0].leds[right_offset] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
-//     right_offset--;
-//
-//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
-//     gib_imlib_free_image(thumbnail);
-//   }
-//   gib_imlib_free_image(image);
-// }
+void calculate_left(){
+  image = scrot_grab_part_shot(0, 0, LEFT_BLOCKSIZE_X, RESOLUTION_Y);
+
+  for(int x = 0, l = LEFT_LENGTH; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x * LEFT_BLOCKSIZE_Y, LEFT_BLOCKSIZE_X, LEFT_BLOCKSIZE_Y, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_left[x]);
+
+    ledstring.channel[0].leds[LEFT_STOP_LED - x] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
+
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+}
+
+void calculate_bottom(){
+  int bottom_offset = 203;
+  image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
+
+  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
+    thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+
+    if(bottom_offset >= 225){
+      bottom_offset = 65;
+    }
+    bottom_offset++;
+    ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
+
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+}
+
+void calculate_right(){
+  image = scrot_grab_part_shot(RESOLUTION_X - RIGHT_BLOCKSIZE_X, 0, RIGHT_BLOCKSIZE_X, RESOLUTION_Y);
+
+  for(int x = 0, l = RIGHT_LENGTH; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x * RIGHT_BLOCKSIZE_Y, RIGHT_BLOCKSIZE_X, RIGHT_BLOCKSIZE_Y, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_right[x]);
+
+    ledstring.channel[0].leds[LEFT_START_LED + x] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
+
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+}
