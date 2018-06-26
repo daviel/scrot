@@ -48,6 +48,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "scrot.h"
 
+typedef int bool;
+#define true 1
+#define false 0
+
 
 void calculate_colors(void);
 void calculate_top(void);
@@ -74,9 +78,9 @@ int RIGHT_START_LED = 1;
 int RIGHT_STOP_LED = 10;
 //bool RIGHT_INVERT = FALSE;
 
-int TOP_START_LED = 110;
-int TOP_STOP_LED = 160;
-//bool TOP_INVERT = FALSE;
+int TOP_START_LED = 124;
+int TOP_STOP_LED = 175;
+bool TOP_INVERT = true;
 
 
 int RIGHT_LENGTH;
@@ -245,7 +249,7 @@ void calculate_top(){
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_top[x]);
 
-    ledstring.channel[0].leds[x + TOP_START_LED] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
+    ledstring.channel[0].leds[TOP_STOP_LED - x] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
 
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
     gib_imlib_free_image(thumbnail);
