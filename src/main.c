@@ -66,8 +66,8 @@ int RESOLUTION_X = 1920;
 int RESOLUTION_Y = 1080;
 int TARGET_FPS = 30;
 
-int BOTTOM_START_LED = 1;
-int BOTTOM_STOP_LED = 10;
+int BOTTOM_START_LED = 204;
+int BOTTOM_STOP_LED = 254;
 //bool BOTTOM_INVERT = false;
 
 int LEFT_START_LED = 174;
@@ -216,9 +216,9 @@ scrot_grab_part_shot(int x, int y, int width, int height)
 void
 calculate_colors(void){
   calculate_top();
-  calculate_left();
-  calculate_right();
-  //calculate_bottom();
+  //calculate_left();
+  //calculate_right();
+  calculate_bottom();
 }
 
 void
@@ -273,26 +273,21 @@ void calculate_left(){
   gib_imlib_free_image(image);
 }
 
-// void calculate_bottom(){
-//   int bottom_offset = 203;
-//   image = scrot_grab_part_shot(0, RESOLUTION_Y-BOTTOM_BLOCKSIZE_X, BOTTOM_RESOLUTION_X, BOTTOM_BLOCKSIZE_Y);
-//
-//   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-//     thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-//     imlib_context_set_image(thumbnail);
-//     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
-//
-//     if(bottom_offset >= 225){
-//       bottom_offset = 65;
-//     }
-//     bottom_offset++;
-//     ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
-//
-//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
-//     gib_imlib_free_image(thumbnail);
-//   }
-//   gib_imlib_free_image(image);
-// }
+void calculate_bottom(){
+  image = scrot_grab_part_shot(0, RESOLUTION_Y - BOTTOM_BLOCKSIZE_Y, RESOLUTION_X, BOTTOM_BLOCKSIZE_Y);
+
+  for(int x = 0, l = BOTTOM_LENGTH; x < l; x++){
+    thumbnail =gib_imlib_create_cropped_scaled_image(image, x * BOTTOM_BLOCKSIZE_X, 0, BOTTOM_BLOCKSIZE_X, BOTTOM_BLOCKSIZE_Y, 1, 1, 1);
+    imlib_context_set_image(thumbnail);
+    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+
+    ledstring.channel[0].leds[BOTTOM_START_LED + x] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
+
+    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
+    gib_imlib_free_image(thumbnail);
+  }
+  gib_imlib_free_image(image);
+}
 
 void calculate_right(){
   image = scrot_grab_part_shot(RESOLUTION_X - RIGHT_BLOCKSIZE_X, 0, RIGHT_BLOCKSIZE_X, RESOLUTION_Y);
