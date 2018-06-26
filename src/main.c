@@ -57,7 +57,7 @@ void calculate_colors(void);
 void calculate_top(void);
 void calculate_left(void);
 void calculate_right(void);
-void calculate_bottom(void);
+//void calculate_bottom(void);
 void init(void);
 
 int BLOCKSIZE_DIVISION_OF_RESOLUTION = 10; // means resolution divided by 10
@@ -273,26 +273,26 @@ void calculate_left(){
   gib_imlib_free_image(image);
 }
 
-void calculate_bottom(){
-  int bottom_offset = 203;
-  image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
-
-  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-    thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
-
-    if(bottom_offset >= 225){
-      bottom_offset = 65;
-    }
-    bottom_offset++;
-    ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
-
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
-    gib_imlib_free_image(thumbnail);
-  }
-  gib_imlib_free_image(image);
-}
+// void calculate_bottom(){
+//   int bottom_offset = 203;
+//   image = scrot_grab_part_shot(0, RESOLUTION_Y-BOTTOM_BLOCKSIZE_X, BOTTOM_RESOLUTION_X, BOTTOM_BLOCKSIZE_Y);
+//
+//   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
+//     thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+//     imlib_context_set_image(thumbnail);
+//     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+//
+//     if(bottom_offset >= 225){
+//       bottom_offset = 65;
+//     }
+//     bottom_offset++;
+//     ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
+//
+//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
+//     gib_imlib_free_image(thumbnail);
+//   }
+//   gib_imlib_free_image(image);
+// }
 
 void calculate_right(){
   image = scrot_grab_part_shot(RESOLUTION_X - RIGHT_BLOCKSIZE_X, 0, RIGHT_BLOCKSIZE_X, RESOLUTION_Y);
