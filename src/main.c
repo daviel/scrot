@@ -54,10 +54,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "scrot.h"
 #include "bcm_host.h"
 
-typedef int bool;
-#define true 1
-#define false 0
-
 
 void calculate_colors(void);
 void calculate_top(void);
@@ -74,19 +70,15 @@ int TARGET_FPS = 30;
 
 int BOTTOM_START_LED = 204;
 int BOTTOM_STOP_LED = 255;
-//bool BOTTOM_INVERT = false;
 
 int LEFT_START_LED = 174;
 int LEFT_STOP_LED = 204;
-//bool LEFT_INVERT = true;
 
 int RIGHT_START_LED = 95;
 int RIGHT_STOP_LED = 123;
-//bool RIGHT_INVERT = false;
 
 int TOP_START_LED = 123;
 int TOP_STOP_LED = 174;
-//bool TOP_INVERT = true;
 
 
 int RIGHT_LENGTH;
@@ -150,13 +142,18 @@ Imlib_Color *colors_top;
 Imlib_Color *colors_left;
 Imlib_Color *colors_bottom;
 
+const char* program = "Test";
+
 
 int
 main(int argc,
      char **argv)
 {
   printf("Started!\n");
+
   int result = 0;
+  VC_IMAGE_TYPE_T imageType = VC_IMAGE_RGBA32;
+
   init();
   bcm_host_init();
 
@@ -184,17 +181,16 @@ main(int argc,
                                  DISPMANX_NO_ROTATE);
 
   VC_RECT_T rect;
-  result = vc_dispmanx_rect_set(&rect, 0, 0, dmxWidth, dmxHeight);
+  result = vc_dispmanx_rect_set(&rect, 0, 0, 1920, 1080);
+  void *dmxImagePtr = malloc(1920 * 1080);
 
   result = vc_dispmanx_resource_read_data(resourceHandle,
                                           &rect,
                                           dmxImagePtr,
-                                          dmxPitch);
+                                          0);
 
 
-  return;
-
-
+  return 0;
 
   ws2811_return_t ret;
 
