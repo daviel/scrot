@@ -57,7 +57,7 @@ void calculate_colors(void);
 void calculate_top(void);
 void calculate_left(void);
 void calculate_right(void);
-//void calculate_bottom(void);
+void calculate_bottom(void);
 void init(void);
 
 int BLOCKSIZE_DIVISION_OF_RESOLUTION = 10; // means resolution divided by 10
@@ -70,12 +70,12 @@ int BOTTOM_START_LED = 1;
 int BOTTOM_STOP_LED = 10;
 //bool BOTTOM_INVERT = false;
 
-int LEFT_START_LED = 175;
-int LEFT_STOP_LED = 205;
+int LEFT_START_LED = 174;
+int LEFT_STOP_LED = 204;
 //bool LEFT_INVERT = true;
 
 int RIGHT_START_LED = 95;
-int RIGHT_STOP_LED = 122;
+int RIGHT_STOP_LED = 123;
 //bool RIGHT_INVERT = false;
 
 int TOP_START_LED = 123;
@@ -265,7 +265,7 @@ void calculate_left(){
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_left[x]);
 
-    ledstring.channel[0].leds[LEFT_STOP_LED - x] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
+    ledstring.channel[0].leds[LEFT_START_LED + x] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
 
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
     gib_imlib_free_image(thumbnail);
@@ -302,7 +302,7 @@ void calculate_right(){
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_right[x]);
 
-    ledstring.channel[0].leds[LEFT_START_LED + x] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
+    ledstring.channel[0].leds[RIGHT_STOP_LED - x] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
 
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
     gib_imlib_free_image(thumbnail);
