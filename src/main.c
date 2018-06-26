@@ -39,7 +39,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdarg.h>
 #include <getopt.h>
 
-
 #include "clk.h"
 #include "gpio.h"
 #include "dma.h"
@@ -49,20 +48,53 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "scrot.h"
 
+
 void calculate_colors(void);
 void calculate_top(void);
 void calculate_left(void);
 void calculate_right(void);
 void calculate_bottom(void);
+void init(void);
 
-#define BLOCKSIZE_X 38
-#define BLOCKSIZE_Y 36
-#define RESOLUTION_X 1920
-#define RESOLUTION_Y 1080
-#define TARGET_FPS 30
+int BLOCKSIZE_DIVISION_OF_RESOLUTION = 10; // means resolution divided by 10
 
-#define LEDS_RIGHTLEFT 30
-#define LEDS_TOPBOTTOM 50
+int RESOLUTION_X = 1920;
+int RESOLUTION_Y = 1080;
+int TARGET_FPS = 30;
+
+int BOTTOM_START_LED = 1;
+int BOTTOM_STOP_LED = 10;
+//bool BOTTOM_INVERT = FALSE;
+
+int LEFT_START_LED = 1;
+int LEFT_STOP_LED = 10;
+//bool LEFT_INVERT = FALSE;
+
+int RIGHT_START_LED = 1;
+int RIGHT_STOP_LED = 10;
+//bool RIGHT_INVERT = FALSE;
+
+int TOP_START_LED = 1;
+int TOP_STOP_LED = 10;
+//bool TOP_INVERT = FALSE;
+
+
+int RIGHT_LENGTH;
+int TOP_LENGTH;
+int LEFT_LENGTH;
+int BOTTOM_LENGTH;
+
+int TOP_BLOCKSIZE_X;
+int TOP_BLOCKSIZE_Y;
+
+int BOTTOM_BLOCKSIZE_X;
+int BOTTOM_BLOCKSIZE_Y;
+
+int LEFT_BLOCKSIZE_X;
+int LEFT_BLOCKSIZE_Y;
+
+int RIGHT_BLOCKSIZE_X;
+int RIGHT_BLOCKSIZE_Y;
 
 
 // defaults for cmdline options
@@ -100,21 +132,27 @@ ws2811_t ledstring =
 };
 
 
-
 Imlib_Image image;
 Imlib_Image thumbnail;
 
-Imlib_Color colors_top[RESOLUTION_X/BLOCKSIZE_X];
-Imlib_Color colors_left[RESOLUTION_Y/BLOCKSIZE_Y];
-Imlib_Color colors_right[RESOLUTION_Y/BLOCKSIZE_Y];
-Imlib_Color colors_bottom[RESOLUTION_X/BLOCKSIZE_X];
+Imlib_Color *colors_right;
+Imlib_Color *colors_top;
+Imlib_Color *colors_left;
+Imlib_Color *colors_bottom;
 
 
 int
 main(int argc,
      char **argv)
 {
+  init();
   printf("Started!\n");
+
+  colors_right = malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_top = malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_left = malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_bottom = malloc(TOP_LENGTH * sizeof(Imlib_Color));
+
   ws2811_return_t ret;
 
   if ((ret = ws2811_init(&ledstring)) != WS2811_SUCCESS)
@@ -131,10 +169,10 @@ main(int argc,
   ts.tv_sec  = 0;
   ts.tv_nsec = 500000000L;
   double render_time = 0;
-  
+
   for(int led_num = 0; led_num < 300; led_num++)
-    ledstring.channel[0].leds[led_num] = 0; 
-  
+    ledstring.channel[0].leds[led_num] = 0;
+
   while(1){
     clock_t start = clock();
     calculate_colors();
@@ -174,21 +212,40 @@ scrot_grab_part_shot(int x, int y, int width, int height)
 void
 calculate_colors(void){
   calculate_top();
-  calculate_left();
-  calculate_right();
-  calculate_bottom();
+  //calculate_left();
+  //calculate_right();
+  //calculate_bottom();
+}
+
+void
+init(void){
+  int RIGHT_LENGTH = RIGHT_STOP_LED - RIGHT_START_LED;
+  int TOP_LENGTH = TOP_STOP_LED - TOP_START_LED;
+  int LEFT_LENGTH = LEFT_STOP_LED - LEFT_START_LED;
+  int BOTTOM_LENGTH = BOTTOM_STOP_LED - BOTTOM_START_LED;
+
+  int TOP_BLOCKSIZE_X = RESOLUTION_X / TOP_LENGTH;
+  int TOP_BLOCKSIZE_Y = RESOLUTION_Y / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+
+  int BOTTOM_BLOCKSIZE_X = RESOLUTION_X / BOTTOM_LENGTH;
+  int BOTTOM_BLOCKSIZE_Y = RESOLUTION_Y / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+
+  int LEFT_BLOCKSIZE_X = RESOLUTION_X / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+  int LEFT_BLOCKSIZE_Y = RESOLUTION_Y / LEFT_LENGTH;
+
+  int RIGHT_BLOCKSIZE_X = RESOLUTION_X / BLOCKSIZE_DIVISION_OF_RESOLUTION;
+  int RIGHT_BLOCKSIZE_Y = RESOLUTION_Y / RIGHT_LENGTH;
 }
 
 void calculate_top(){
-  image = scrot_grab_part_shot(0, 0, RESOLUTION_X, BLOCKSIZE_Y);
-  int top_offset = 176;
-  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-    thumbnail = gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+  image = scrot_grab_part_shot(0, 0, RESOLUTION_X, TOP_BLOCKSIZE_Y);
+
+  for(int x = 0, l = TOP_LENGTH; x < l; x++){
+    thumbnail = gib_imlib_create_cropped_scaled_image(image, x * TOP_BLOCKSIZE_X, 0, TOP_BLOCKSIZE_X, TOP_BLOCKSIZE_Y, 1, 1, 1);
     imlib_context_set_image(thumbnail);
     imlib_image_query_pixel(0, 0, &colors_top[x]);
 
-    ledstring.channel[0].leds[top_offset] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
-    top_offset--;
+    ledstring.channel[0].leds[x + TOP_START_LED] = (int) ((colors_top[x].blue << 16) + (colors_top[x].green << 8) + colors_top[x].red);
 
     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_top[x].red, colors_top[x].green, colors_top[x].blue);
     gib_imlib_free_image(thumbnail);
@@ -196,61 +253,61 @@ void calculate_top(){
   gib_imlib_free_image(image);
 }
 
-void calculate_left(){
-  int left_offset = 177;
-  image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
-
-  for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
-    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_left[x]);
-
-    ledstring.channel[0].leds[left_offset] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
-    left_offset++;
-
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
-    gib_imlib_free_image(thumbnail);
-  }
-  gib_imlib_free_image(image);
-}
-
-void calculate_bottom(){
-  int bottom_offset = 203;
-  image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
-
-  for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
-    thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_bottom[x]);
-
-    if(bottom_offset >= 225){
-      bottom_offset = 65;
-    }
-    bottom_offset++;
-    ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
-
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
-    gib_imlib_free_image(thumbnail);
-  }
-  gib_imlib_free_image(image);
-}
-
-void calculate_right(){
-  int right_offset = 123;
-  image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
-
-  for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
-    thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
-    imlib_context_set_image(thumbnail);
-    imlib_image_query_pixel(0, 0, &colors_right[x]);
-
-    if(right_offset != 80)
-      ledstring.channel[0].leds[right_offset] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
-    right_offset--;
-
-    //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
-    gib_imlib_free_image(thumbnail);
-  }
-  gib_imlib_free_image(image);
-}
+// void calculate_left(){
+//   int left_offset = 177;
+//   image = scrot_grab_part_shot(0, 0, BLOCKSIZE_X, RESOLUTION_Y);
+//
+//   for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
+//     thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+//
+//     imlib_context_set_image(thumbnail);
+//     imlib_image_query_pixel(0, 0, &colors_left[x]);
+//
+//     ledstring.channel[0].leds[left_offset] = (colors_left[x].blue << 16) + (colors_left[x].green << 8) + colors_left[x].red;
+//     left_offset++;
+//
+//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_left[x].red, colors_left[x].green, colors_left[x].blue);
+//     gib_imlib_free_image(thumbnail);
+//   }
+//   gib_imlib_free_image(image);
+// }
+//
+// void calculate_bottom(){
+//   int bottom_offset = 203;
+//   image = scrot_grab_part_shot(0, RESOLUTION_Y-BLOCKSIZE_X, RESOLUTION_X, BLOCKSIZE_Y);
+//
+//   for(int x = 0, l = RESOLUTION_X/BLOCKSIZE_X; x < l; x++){
+//     thumbnail =gib_imlib_create_cropped_scaled_image(image, x*BLOCKSIZE_X, 0, BLOCKSIZE_X, BLOCKSIZE_Y, 1, 1, 1);
+//     imlib_context_set_image(thumbnail);
+//     imlib_image_query_pixel(0, 0, &colors_bottom[x]);
+//
+//     if(bottom_offset >= 225){
+//       bottom_offset = 65;
+//     }
+//     bottom_offset++;
+//     ledstring.channel[0].leds[bottom_offset] = (colors_bottom[x].blue << 16) + (colors_bottom[x].green << 8) + colors_bottom[x].red;
+//
+//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_bottom[x].red, colors_bottom[x].green, colors_bottom[x].blue);
+//     gib_imlib_free_image(thumbnail);
+//   }
+//   gib_imlib_free_image(image);
+// }
+//
+// void calculate_right(){
+//   int right_offset = 123;
+//   image = scrot_grab_part_shot(RESOLUTION_X-BLOCKSIZE_X, 0, BLOCKSIZE_X, RESOLUTION_Y);
+//
+//   for(int x = 0, l = RESOLUTION_Y / BLOCKSIZE_Y; x < l; x++){
+//     thumbnail = gib_imlib_create_cropped_scaled_image(image, 0, x*BLOCKSIZE_Y, BLOCKSIZE_Y, BLOCKSIZE_X, 1, 1, 1);
+//     imlib_context_set_image(thumbnail);
+//     imlib_image_query_pixel(0, 0, &colors_right[x]);
+//
+//     if(right_offset != 80)
+//       ledstring.channel[0].leds[right_offset] = (colors_right[x].blue << 16) + (colors_right[x].green << 8) + colors_right[x].red;
+//     right_offset--;
+//
+//     //printf("Pixel %d: rgb: %d %d %d\n", x, colors_right[x].red, colors_right[x].green, colors_right[x].blue);
+//     gib_imlib_free_image(thumbnail);
+//   }
+//   gib_imlib_free_image(image);
+// }
