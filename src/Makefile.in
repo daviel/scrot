@@ -73,15 +73,14 @@ VERSION = @VERSION@
 
 MAINTAINERCLEANFILES = Makefile.in
 
-LDFLAGS = -L/usr/X11R6/lib
-INCLUDES = -g -O3 -Wall -I/usr/X11R6/include $(X_CFLAGS) -I$(prefix)/include -I$(includedir) -I. -DPREFIX=\""$(prefix)"\" @GIBLIB_CFLAGS@
+INCLUDES = -g -O3 -Wall -I/opt/vc/include/ -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
 
 LIBOBJS = @LIBOBJS@
 
 bin_PROGRAMS = scrot
 scrot_SOURCES = main.c scrot.h imlib.c
 
-scrot_LDADD = -lX11 @GIBLIB_LIBS@
+scrot_LDADD = -lbcm_host @GIBLIB_LIBS@
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
@@ -93,11 +92,10 @@ CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
 scrot_OBJECTS =  main.o imlib.o ws2811.o mailbox.o dma.o pcm.o pwm.o rpihw.o
 scrot_DEPENDENCIES =
-scrot_LDFLAGS =
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) -o $@
 DIST_COMMON =  ./stamp-h.in Makefile.am Makefile.in config.h.in
 
 
@@ -193,7 +191,7 @@ maintainer-clean-compile:
 
 scrot: $(scrot_OBJECTS) $(scrot_DEPENDENCIES)
 	@rm -f scrot
-	$(LINK) $(scrot_LDFLAGS) $(scrot_OBJECTS) $(scrot_LDADD) $(LIBS)
+	$(LINK) $(scrot_OBJECTS) $(scrot_LDADD) $(LIBS)
 
 tags: TAGS
 

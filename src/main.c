@@ -24,6 +24,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
+#define _GNU_SOURCE
+
+#include <math.h>
+#include <stdbool.h>
+#include <zlib.h>
 
 #include <time.h>
 #include <stdint.h>
@@ -47,6 +52,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "imlib.h"
 
 #include "scrot.h"
+#include "bcm_host.h"
 
 typedef int bool;
 #define true 1
@@ -150,12 +156,45 @@ main(int argc,
      char **argv)
 {
   printf("Started!\n");
+  int result = 0;
   init();
+  bcm_host_init();
 
-  colors_right = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  colors_top = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  colors_left = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
-  colors_bottom = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  DISPMANX_DISPLAY_HANDLE_T displayHandle = vc_dispmanx_display_open(displayNumber);
+
+  if (displayHandle == 0)
+  {
+      fprintf(stderr,
+              "%s: unable to open display %d\n",
+              program,
+              displayNumber);
+
+      exit(EXIT_FAILURE);
+  }
+
+  uint32_t vcImagePtr = 0;
+  DISPMANX_RESOURCE_HANDLE_T resourceHandle;
+  resourceHandle = vc_dispmanx_resource_create(imageType,
+                                               RESOLUTION_X,
+                                               RESOLUTION_Y,
+                                               &vcImagePtr);
+
+  result = vc_dispmanx_snapshot(displayHandle,
+                                 resourceHandle,
+                                 DISPMANX_NO_ROTATE);
+
+  VC_RECT_T rect;
+  result = vc_dispmanx_rect_set(&rect, 0, 0, dmxWidth, dmxHeight);
+
+  result = vc_dispmanx_resource_read_data(resourceHandle,
+                                          &rect,
+                                          dmxImagePtr,
+                                          dmxPitch);
+
+
+  return;
+
+
 
   ws2811_return_t ret;
 
@@ -239,6 +278,11 @@ init(void){
 
   RIGHT_BLOCKSIZE_X = RESOLUTION_X / BLOCKSIZE_DIVISION_OF_RESOLUTION;
   RIGHT_BLOCKSIZE_Y = RESOLUTION_Y / RIGHT_LENGTH;
+
+  colors_right = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_top = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_left = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
+  colors_bottom = (Imlib_Color *) malloc(TOP_LENGTH * sizeof(Imlib_Color));
 }
 
 void calculate_top(){
